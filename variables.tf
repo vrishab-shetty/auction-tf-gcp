@@ -17,3 +17,20 @@ variable "cloud_run_configs" {
     port               = number
   })
 }
+
+# DNS
+variable "subdomain_name" {
+  type = string
+}
+
+variable "root_domain_name" {
+  type = string
+}
+
+variable "dns_zone_name" {
+  type = string
+}
+
+variable "dns_record_ttl" {
+  type = number
+}
