@@ -15,14 +15,16 @@ resource "google_cloud_run_v2_service_iam_binding" "public_access_binding" {
   location = google_cloud_run_v2_service.default.location
   name = google_cloud_run_v2_service.default.name
   role = "roles/run.invoker"
-  members = [
-    "allUsers",
-  ]
+  members = var.cloud_run_public_access ? ["allUsers"] : []
 }
 
 
 data "google_dns_managed_zone" "dns_zone" {
   name = var.dns_zone_name
+}
+
+locals {
+  dns_zone_exists = length(data.google_dns_managed_zone.dns_zone) > 0
 }
 
 resource "google_cloud_run_domain_mapping" "domain_mapping" {
@@ -39,9 +41,11 @@ resource "google_cloud_run_domain_mapping" "domain_mapping" {
 
 
 resource "google_dns_record_set" "default" {
+  count = local.dns_zone_exists ? 1 : 0
+  
   managed_zone = data.google_dns_managed_zone.dns_zone.name
   name         = "${var.subdomain_name}.${data.google_dns_managed_zone.dns_zone.dns_name}"
   type         = "CNAME"
-  rrdatas      = ["ghs.googlehosted.com."]
+  rrdatas      = [google_cloud_run_domain_mapping.domain_mapping.status[0].resource_records[0].rrdata]
   ttl          = var.dns_record_ttl
 }
